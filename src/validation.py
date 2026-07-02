@@ -14,7 +14,8 @@ def run_cross_validation(pipeline: Pipeline,
     '''Запускает кросс-валидацию используя подход stratified k fold'''
     
     skf = StratifiedKFold(n_splits=n_split, shuffle=shuffle, random_state=random_state)
-    fold_accuracy = []
+    train_fold_accuracy = []
+    val_fold_accuracy = []
 
     for train_indices, val_indices in skf.split(train_X, train_y):
         x_train_fold = train_X.iloc[train_indices]
@@ -25,11 +26,16 @@ def run_cross_validation(pipeline: Pipeline,
 
         pipeline.fit(x_train_fold, y_train_fold)
 
-        y_pred = pipeline.predict(x_val_fold)
+        y_train_pred = pipeline.predict(x_train_fold)
+        y_val_pred = pipeline.predict(x_val_fold)
+        
+        train_accuracy = accuracy_score(y_train_fold, y_train_pred)
+        val_accuracy = accuracy_score(y_val_fold, y_val_pred)
 
-        accuracy = accuracy_score(y_val_fold, y_pred)
-        fold_accuracy.append(accuracy)
+        train_fold_accuracy.append(train_accuracy)
+        val_fold_accuracy.append(val_accuracy)
 
-    mean_accuracy = sum(fold_accuracy) / len(fold_accuracy)
-    std_accuracy = np.std(fold_accuracy)
-    return mean_accuracy, std_accuracy, fold_accuracy
+    mean_val_accuracy = sum(val_fold_accuracy) / len(val_fold_accuracy)
+    std_val_accuracy = np.std(val_fold_accuracy)
+    mean_train_accuracy = sum(train_fold_accuracy) / len(train_fold_accuracy)
+    return mean_val_accuracy, std_val_accuracy, mean_train_accuracy, val_fold_accuracy, train_fold_accuracy
